@@ -1,7 +1,7 @@
 # CVE-2024-30078 Exploit
 ## Overview
 ### CVE-2024-30078:
-describes a vulnerability in the way Windows handles SSIDs (Service Set Identifiers) in WiFi networks. Windows can manage SSIDs up to 512 bytes long, which exceeds the WiFi standard. By sending chunked frames to increase the SSID size beyond 512 bytes, a buffer overflow can be triggered. This exploit leverages this vulnerability to cause a buffer overflow by creating and sending WiFi beacon frames with oversized SSID fields.
+describes a vulnerability in the way Windows handles SSIDs (Service Set Identifiers) in WiFi networks. Windows has a buffer for SSIDs up to 512 bytes long, which exceeds the WiFi standard. By sending chunked frames to increase the SSID size beyond 512 bytes, a buffer overflow can be triggered. This exploit leverages this vulnerability to cause a buffer overflow by creating and sending WiFi beacon frames with oversized SSID fields.
 
 # Explanation
 ## How the Code Works
