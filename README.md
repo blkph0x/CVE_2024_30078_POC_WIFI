@@ -1,3 +1,7 @@
+#INFO : 
+This REPO does not seem to be hitting the same bug as in the stated CVE new information has came to my attention thaks to FarmPoet, The CVE-2024-30078 vulnerability is in Dot11Translate80211ToEthernetNdisPacket() of the native wifi windows driver (nwifi.sys) and a very specific frame needs to be constructed to even get to the vulnerable code path (which this code does not).
+## Im working on it
+I have identified the chnages in the funtion and am now working on reversing to construt the relivent frame required to gain code flow into this segment. 
 # CVE-2024-30078 Exploit
 ## Overview
 ### CVE-2024-30078:
