@@ -5,6 +5,9 @@ I have identified the chnages in the function and am now working on reversing to
 # CVE-2024-30078 Exploit
 ## Overview
 ### CVE-2024-30078:
+# UPDATE 2
+## file
+i have added to files to assit with debugging the CVE
 # UPDATE 1
 ## issue
 So in reversing this cve I have identified perhapes two methods of exploitaion 1. An attacker may beable to send a crafted packet while authenticated to a network this is much harder and requires more moving parts. 2. the easy way identify probes make educated guess on whitch probes a device has used that does not require AUTHentication, Construct a Rouge AP using the details of the open network probe(may require so guess work) then wait for a device to auto join and send the contructed frames to reach the affected code path(Thats where im working now). On joining an open network the AP sends multiple frames that reach the affected code block(not with the desired flags) we can construct the frame to include the desired flags to reach the code that has been patched or not in this case to try and identify the point of exploitation. We seem to have enough infomation now for this to work. Just need to build it out and run a few test cases while kernel debugging.  
