@@ -6,7 +6,9 @@ I have identified the chnages in the funtion and am now working on reversing to 
 ## Overview
 ### CVE-2024-30078:
 describes a vulnerability in the way Windows handles SSIDs (Service Set Identifiers) in WiFi networks. Windows has a buffer for SSIDs up to 512 bytes long, which exceeds the WiFi standard. By sending chunked frames to increase the SSID size beyond 512 bytes, a buffer overflow can be triggered. This exploit leverages this vulnerability to cause a buffer overflow by creating and sending WiFi beacon frames with oversized SSID fields.
-
+# UPDATE 1
+## issue
+So in reversing this cve I have identified perhapes two methods of exploitaion 1. An attacker may beable to send a crafted packet while authenticated to a network this is much harder and requires more moving parts. 2. the easy way identify probes make educated guess on whitch probes a device has used that does not require AUTHentication, Construct a Rouge AP using the details of the open network probe(may require so guess work) then wait for a device to auto join and send the contructed frames to reach the affected code path(Thats where im working now). On joining an open network the AP sends multiple frames that reach the affected code block(not with the desired flags) we can construct the frame to include the desired flags to reach the code that has been patched or not in this case to try and identify the point of exploitation. We seem to have enough infomation now for this to work. Just need to build it out and run a few test cases while kernel debugging.  
 # Explanation
 ## How the Code Works
 ### Imports and Initialization: 
