@@ -1,3 +1,4 @@
+#may still be usefull for another issue could be related to a msi wifi driver (TO CHECK OUT AFTER THIS PROJECT)
 from scapy.all import *
 import sys
 
