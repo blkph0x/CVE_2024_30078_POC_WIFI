@@ -31,7 +31,6 @@ def create_beacon(ssid, bssid, channel):
              Dot11Elt(ID=7, info=b'\x07\x52\x55\x53\x00') / \
              Dot11Elt(ID=50, info=b'\x30\x48\x60\x6c') / \
              Dot11Elt(ID=42, info=b'\x00') / \
-             Dot11Elt(ID=45, info=b'\x2c\x01\x1b\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00') / \
              Dot11Elt(ID=61, info=chr(channel).encode() + b'\x01\x00\x00\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00') / \
              Dot11Elt(ID=221, info=custom_vsa)
     return beacon
@@ -46,7 +45,6 @@ def create_probe_response(bssid, src_mac):
                      Dot11Elt(ID=7, info=b'\x07\x52\x55\x53\x00') / \
                      Dot11Elt(ID=50, info=b'\x30\x48\x60\x6c') / \
                      Dot11Elt(ID=42, info=b'\x00') / \
-                     Dot11Elt(ID=45, info=b'\x2c\x01\x1b\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00') / \
                      Dot11Elt(ID=61, info=chr(channel).encode() + b'\x01\x00\x00\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00') / \
                      Dot11Elt(ID=221, info=custom_vsa)
     return probe_response
@@ -60,7 +58,6 @@ def create_assoc_response(bssid, src_mac):
                      Dot11Elt(ID=3, info=chr(channel).encode()) / \
                      Dot11Elt(ID=7, info=b'\x07\x52\x55\x53\x00') / \
                      Dot11Elt(ID=42, info=b'\x00') / \
-                     Dot11Elt(ID=45, info=b'\x2c\x01\x1b\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00') / \
                      Dot11Elt(ID=61, info=chr(channel).encode() + b'\x01\x00\x00\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00') / \
                      Dot11Elt(ID=221, info=custom_vsa)
     return assoc_response
