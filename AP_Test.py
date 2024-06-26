@@ -1,4 +1,3 @@
-# work in progress
 from scapy.all import *
 from scapy.layers.dot11 import RadioTap, Dot11, Dot11Beacon, Dot11Elt, Dot11AssoReq, Dot11AssoResp, Dot11ProbeReq
 import time
@@ -28,10 +27,10 @@ def create_beacon(ssid, bssid, channel):
              Dot11Elt(ID=1, info=b'\x82\x84\x8b\x96\x0c\x12\x18\x24') / \
              Dot11Elt(ID=3, info=chr(channel).encode()) / \
              Dot11Elt(ID=5, info=b'\x00\x01\x00\x00') / \
-             Dot11Elt(ID=7, info=b'\x07\x52\x55\x53\x00') / \
+             Dot11Elt(ID=7, info=b'\x07\x52\x55\x53\x00\x00') / \
              Dot11Elt(ID=50, info=b'\x30\x48\x60\x6c') / \
              Dot11Elt(ID=42, info=b'\x00') / \
-             Dot11Elt(ID=61, info=chr(channel).encode() + b'\x01\x00\x00\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00') / \
+             Dot11Elt(ID=61, info=chr(channel).encode() + b'\x01\x00\x00\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00') / \
              Dot11Elt(ID=221, info=custom_vsa)
     return beacon
 
@@ -42,10 +41,10 @@ def create_probe_response(bssid, src_mac):
                      Dot11Elt(ID=0, info=SSID) / \
                      Dot11Elt(ID=1, info=b'\x82\x84\x8b\x96\x0c\x12\x18\x24') / \
                      Dot11Elt(ID=3, info=chr(channel).encode()) / \
-                     Dot11Elt(ID=7, info=b'\x07\x52\x55\x53\x00') / \
+                     Dot11Elt(ID=7, info=b'\x07\x52\x55\x53\x00\x00') / \
                      Dot11Elt(ID=50, info=b'\x30\x48\x60\x6c') / \
                      Dot11Elt(ID=42, info=b'\x00') / \
-                     Dot11Elt(ID=61, info=chr(channel).encode() + b'\x01\x00\x00\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00') / \
+                     Dot11Elt(ID=61, info=chr(channel).encode() + b'\x01\x00\x00\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00') / \
                      Dot11Elt(ID=221, info=custom_vsa)
     return probe_response
 
@@ -56,9 +55,9 @@ def create_assoc_response(bssid, src_mac):
                      Dot11Elt(ID=1, info=b'\x82\x84\x8b\x96\x0c\x12\x18\x24') / \
                      Dot11Elt(ID=50, info=b'\x30\x48\x60\x6c') / \
                      Dot11Elt(ID=3, info=chr(channel).encode()) / \
-                     Dot11Elt(ID=7, info=b'\x07\x52\x55\x53\x00') / \
+                     Dot11Elt(ID=7, info=b'\x07\x52\x55\x53\x00\x00') / \
                      Dot11Elt(ID=42, info=b'\x00') / \
-                     Dot11Elt(ID=61, info=chr(channel).encode() + b'\x01\x00\x00\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00') / \
+                     Dot11Elt(ID=61, info=chr(channel).encode() + b'\x01\x00\x00\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00') / \
                      Dot11Elt(ID=221, info=custom_vsa)
     return assoc_response
 
