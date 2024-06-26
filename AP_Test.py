@@ -5,7 +5,7 @@ import time
 
 SSID = "TestAP"
 interface = "wlan0mon"
-bssid = "02:00:00:00:01:00"  # MAC address of the AP
+bssid = "0C:27:CB:48:52:FC"  # MAC address of the AP
 channel = 6  # Channel number
 
 # Custom Vendor Specific Attribute (VSA)
@@ -23,49 +23,46 @@ def create_beacon(ssid, bssid, channel):
     seq = get_sequence_number()
     beacon = RadioTap() / \
              Dot11(type=0, subtype=8, addr1="ff:ff:ff:ff:ff:ff", addr2=bssid, addr3=bssid, SC=seq << 4) / \
-             Dot11Beacon(timestamp=int(time.time()), beacon_interval=0x0064, cap="ESS") / \
-             Dot11Elt(ID="SSID", info=ssid) / \
-             Dot11Elt(ID="Rates", info=b'\x82\x84\x8b\x96\x0c\x12\x18\x24') / \
-             Dot11Elt(ID="DSset", info=chr(channel).encode()) / \
-             Dot11Elt(ID="TIM", info=b'\x00\x01\x00\x00') / \
-             Dot11Elt(ID="Country", info=b'\x07\x52\x55\x53\x00') / \
-             Dot11Elt(ID="Extended Rates", info=b'\x30\x48\x60\x6c') / \
-             Dot11Elt(ID="ERPinfo", info=b'\x00') / \
-             Dot11Elt(ID="HT Capabilities", info=b'\x2c\x01\x1b\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00') / \
-             Dot11Elt(ID="HT Information", info=chr(channel).encode() + b'\x01\x00\x00\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00') / \
-             Dot11Elt(ID="RSNinfo", info=b'\x01\x00\x00\x0f\xac\x02\x02\x00\x00\x0f\xac\x04\x00\x0f\xac\x02\x00\x00') / \
-             Dot11Elt(ID="Vendor", info=custom_vsa)
+             Dot11Beacon(timestamp=int(time.time()), beacon_interval=0x0064, cap=0x2104) / \
+             Dot11Elt(ID=0, info=ssid) / \
+             Dot11Elt(ID=1, info=b'\x82\x84\x8b\x96\x0c\x12\x18\x24') / \
+             Dot11Elt(ID=3, info=chr(channel).encode()) / \
+             Dot11Elt(ID=5, info=b'\x00\x01\x00\x00') / \
+             Dot11Elt(ID=7, info=b'\x07\x52\x55\x53\x00') / \
+             Dot11Elt(ID=50, info=b'\x30\x48\x60\x6c') / \
+             Dot11Elt(ID=42, info=b'\x00') / \
+             Dot11Elt(ID=45, info=b'\x2c\x01\x1b\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00') / \
+             Dot11Elt(ID=61, info=chr(channel).encode() + b'\x01\x00\x00\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00') / \
+             Dot11Elt(ID=221, info=custom_vsa)
     return beacon
 
 def create_probe_response(bssid, src_mac):
     probe_response = RadioTap() / \
                      Dot11(type=0, subtype=5, addr1=src_mac, addr2=bssid, addr3=bssid) / \
-                     Dot11Beacon(timestamp=int(time.time()), beacon_interval=0x0064, cap="ESS") / \
-                     Dot11Elt(ID="SSID", info=SSID) / \
-                     Dot11Elt(ID="Rates", info=b'\x82\x84\x8b\x96\x0c\x12\x18\x24') / \
-                     Dot11Elt(ID="DSset", info=chr(channel).encode()) / \
-                     Dot11Elt(ID="Country", info=b'\x07\x52\x55\x53\x00') / \
-                     Dot11Elt(ID="Extended Rates", info=b'\x30\x48\x60\x6c') / \
-                     Dot11Elt(ID="ERPinfo", info=b'\x00') / \
-                     Dot11Elt(ID="HT Capabilities", info=b'\x2c\x01\x1b\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00') / \
-                     Dot11Elt(ID="HT Information", info=chr(channel).encode() + b'\x01\x00\x00\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00') / \
-                     Dot11Elt(ID="RSNinfo", info=b'\x01\x00\x00\x0f\xac\x02\x02\x00\x00\x0f\xac\x04\x00\x0f\xac\x02\x00\x00') / \
-                     Dot11Elt(ID="Vendor", info=custom_vsa)
+                     Dot11Beacon(timestamp=int(time.time()), beacon_interval=0x0064, cap=0x2104) / \
+                     Dot11Elt(ID=0, info=SSID) / \
+                     Dot11Elt(ID=1, info=b'\x82\x84\x8b\x96\x0c\x12\x18\x24') / \
+                     Dot11Elt(ID=3, info=chr(channel).encode()) / \
+                     Dot11Elt(ID=7, info=b'\x07\x52\x55\x53\x00') / \
+                     Dot11Elt(ID=50, info=b'\x30\x48\x60\x6c') / \
+                     Dot11Elt(ID=42, info=b'\x00') / \
+                     Dot11Elt(ID=45, info=b'\x2c\x01\x1b\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00') / \
+                     Dot11Elt(ID=61, info=chr(channel).encode() + b'\x01\x00\x00\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00') / \
+                     Dot11Elt(ID=221, info=custom_vsa)
     return probe_response
 
 def create_assoc_response(bssid, src_mac):
     assoc_response = RadioTap() / \
                      Dot11(type=0, subtype=1, addr1=src_mac, addr2=bssid, addr3=bssid) / \
-                     Dot11AssoResp(cap="ESS", AID=1, status=0) / \
-                     Dot11Elt(ID="Rates", info=b'\x82\x84\x8b\x96\x0c\x12\x18\x24') / \
-                     Dot11Elt(ID="Extended Rates", info=b'\x30\x48\x60\x6c') / \
-                     Dot11Elt(ID="DSset", info=chr(channel).encode()) / \
-                     Dot11Elt(ID="Country", info=b'\x07\x52\x55\x53\x00') / \
-                     Dot11Elt(ID="ERPinfo", info=b'\x00') / \
-                     Dot11Elt(ID="HT Capabilities", info=b'\x2c\x01\x1b\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00') / \
-                     Dot11Elt(ID="HT Information", info=chr(channel).encode() + b'\x01\x00\x00\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00') / \
-                     Dot11Elt(ID="RSNinfo", info=b'\x01\x00\x00\x0f\xac\x02\x02\x00\x00\x0f\xac\x04\x00\x0f\xac\x02\x00\x00') / \
-                     Dot11Elt(ID="Vendor", info=custom_vsa)
+                     Dot11AssoResp(cap=0x2104, AID=1, status=0) / \
+                     Dot11Elt(ID=1, info=b'\x82\x84\x8b\x96\x0c\x12\x18\x24') / \
+                     Dot11Elt(ID=50, info=b'\x30\x48\x60\x6c') / \
+                     Dot11Elt(ID=3, info=chr(channel).encode()) / \
+                     Dot11Elt(ID=7, info=b'\x07\x52\x55\x53\x00') / \
+                     Dot11Elt(ID=42, info=b'\x00') / \
+                     Dot11Elt(ID=45, info=b'\x2c\x01\x1b\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00') / \
+                     Dot11Elt(ID=61, info=chr(channel).encode() + b'\x01\x00\x00\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00') / \
+                     Dot11Elt(ID=221, info=custom_vsa)
     return assoc_response
 
 def send_beacon(interface):
