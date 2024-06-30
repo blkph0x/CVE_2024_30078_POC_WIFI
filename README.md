@@ -1,4 +1,6 @@
 ### CVE-2024-30078:
+# UPDATE 5
+Sorry its been a long weekend.. The issue is in the LLC when vlan is set it should be 8 bytes unless its vlan then it requires 4 more bytes at the end that is what the patch checks. so in the unpatched version we have out of bounds read then at lines 113/114/115 the buffer is modified directily since our payload is 10 bytes long and it expects 12 bytes we will have a 2 byte write condtions where the last two bytes of the senders mac will be written.. putting together a write up and cases over this week in my spare time. i think i wrote that correctly its pretty vague but ill get that sorted.. 
 # UPDATE 4
 long over due update but.. WE HAVE A CRASH! more to come stay tuned.
 # UPDATE 3
