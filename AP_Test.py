@@ -26,6 +26,9 @@ sent_data_frames = {}
 
 ACK_TIMEOUT = 1  # Timeout in seconds for waiting ACKs
 
+# Ensure promiscuous mode is enabled
+os.system(f"sudo ifconfig {INTERFACE} promisc")
+
 def get_sequence_number():
     global seq_num
     seq_num = (seq_num + 1) % 4096
@@ -125,13 +128,22 @@ def send_data_frame(src_mac, dst_mac, payload):
 
 def packet_handler(packet):
     try:
+        # Check RadioTap header to filter out packets sent by our own AP
+        radiotap_header = packet.getlayer(RadioTap)
+        if radiotap_header:
+            src_mac = radiotap_header.addr2
+
+            if src_mac == BSSID:
+                return  # Ignore packets sent by our own AP
+            # Process only if it's not a packet sent by our AP
+        
         if packet.haslayer(Dot11ProbeReq):
             logging.info(f"Received Probe request from {packet.addr2}")
             probe_response = create_probe_response(BSSID, packet.addr2)
             sendp(probe_response, iface=INTERFACE, verbose=False)
             logging.info(f"Probe response sent to {packet.addr2}")
 
-        elif packet.subtype == 11:
+        elif packet.haslayer(Dot11Auth) and packet.addr1 == BSSID:
             logging.info(f"Received Authentication request from {packet.addr2}")
             auth_response = create_auth_response(BSSID, packet.addr2)
             sendp(auth_response, iface=INTERFACE, verbose=False)
