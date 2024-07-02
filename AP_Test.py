@@ -142,19 +142,11 @@ def packet_handler(packet):
             assoc_response = create_assoc_response(BSSID, packet.addr2)
             sendp(assoc_response, iface=INTERFACE, verbose=False)
             logging.info(f"Association response sent to {packet.addr2}")
-            
-            # Handle association success
             clients[packet.addr2] = {'associated': True}
             logging.info(f"Client {packet.addr2} associated successfully")
-            
-            # Send VLAN-tagged data frame immediately after association
-            send_data_frame(BSSID, packet.addr2, b"This is a VLAN-tagged data frame payload")
 
-        elif packet.type == 0 and packet.subtype == 13:  # ACK frame
-            seq = packet.SC >> 4
-            if seq in sent_data_frames:
-                logging.info(f"Received ACK for sequence number: {seq}")
-                del sent_data_frames[seq]
+            # Immediately send VLAN-tagged data frame upon successful association
+            send_data_frame(BSSID, packet.addr2, b"This is a VLAN-tagged data frame payload")
 
         elif packet.type == 2:  # Data frame
             logging.info(f"Received data frame from {packet.addr2} to {packet.addr1}")
@@ -164,6 +156,12 @@ def packet_handler(packet):
             else:  # Forward to the internet
                 send(packet)  # Sending out without RadioTap header for internet
                 logging.info(f"Forwarded data frame to the internet")
+
+        elif packet.type == 0 and packet.subtype == 13:  # ACK frame
+            seq = packet.SC >> 4
+            if seq in sent_data_frames:
+                logging.info(f"Received ACK for sequence number: {seq}")
+                del sent_data_frames[seq]
 
     except Exception as e:
         logging.error(f"Error handling packet: {e}")
@@ -182,12 +180,12 @@ if __name__ == "__main__":
     try:
         logging.info("Starting beacon thread")
         beacon_thread = threading.Thread(target=send_beacon, args=(INTERFACE,))
-        beacon_thread.daemon = True
+        beacon_thread.daemon = True  # Daemon thread to automatically terminate on program exit
         beacon_thread.start()
 
         logging.info("Starting retransmission thread")
         retransmission_thread = threading.Thread(target=retransmit_data_frames)
-        retransmission_thread.daemon = True
+        retransmission_thread.daemon = True  # Daemon thread for retransmitting data frames
         retransmission_thread.start()
 
         logging.info("Starting packet sniffing")
