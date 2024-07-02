@@ -2,7 +2,7 @@ import time
 import threading
 import logging
 from scapy.all import *
-from scapy.layers.dot11 import RadioTap, Dot11, Dot11Beacon, Dot11Elt, Dot11AssoReq, Dot11AssoResp, Dot11Auth, Dot11ProbeReq, Dot11ProbeResp, Dot11ACK, Dot11QoS
+from scapy.layers.dot11 import RadioTap, Dot11, Dot11Beacon, Dot11Elt, Dot11AssoReq, Dot11AssoResp, Dot11Auth, Dot11ProbeReq, Dot11ProbeResp, Dot11QoS
 from scapy.layers.l2 import LLC, SNAP, Dot1Q
 
 # Configuration
@@ -142,8 +142,19 @@ def packet_handler(packet):
             assoc_response = create_assoc_response(BSSID, packet.addr2)
             sendp(assoc_response, iface=INTERFACE, verbose=False)
             logging.info(f"Association response sent to {packet.addr2}")
+            
+            # Handle association success
             clients[packet.addr2] = {'associated': True}
             logging.info(f"Client {packet.addr2} associated successfully")
+            
+            # Send VLAN-tagged data frame immediately after association
+            send_data_frame(BSSID, packet.addr2, b"This is a VLAN-tagged data frame payload")
+
+        elif packet.type == 0 and packet.subtype == 13:  # ACK frame
+            seq = packet.SC >> 4
+            if seq in sent_data_frames:
+                logging.info(f"Received ACK for sequence number: {seq}")
+                del sent_data_frames[seq]
 
         elif packet.type == 2:  # Data frame
             logging.info(f"Received data frame from {packet.addr2} to {packet.addr1}")
@@ -153,12 +164,6 @@ def packet_handler(packet):
             else:  # Forward to the internet
                 send(packet)  # Sending out without RadioTap header for internet
                 logging.info(f"Forwarded data frame to the internet")
-
-        elif packet.type == 0 and packet.subtype == 13:  # ACK frame
-            seq = packet.SC >> 4
-            if seq in sent_data_frames:
-                logging.info(f"Received ACK for sequence number: {seq}")
-                del sent_data_frames[seq]
 
     except Exception as e:
         logging.error(f"Error handling packet: {e}")
