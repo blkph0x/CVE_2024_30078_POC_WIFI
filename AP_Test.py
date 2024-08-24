@@ -1,8 +1,9 @@
 import time
 import threading
 import logging
+import os
 from scapy.all import *
-from scapy.layers.dot11 import RadioTap, Dot11, Dot11Beacon, Dot11Elt, Dot11AssoReq, Dot11AssoResp, Dot11Auth, Dot11ProbeReq, Dot11ProbeResp, Dot11QoS
+from scapy.layers.dot11 import RadioTap, Dot11, Dot11Beacon, Dot11Elt, Dot11AssoReq, Dot11AssoResp, Dot11Auth, Dot11ProbeReq, Dot11ProbeResp
 from scapy.layers.l2 import LLC, SNAP, Dot1Q
 
 # Configuration
@@ -16,6 +17,7 @@ VLAN_ID = 100
 
 # Global sequence number
 seq_num = 0
+seq_num_lock = threading.Lock()
 
 # Logging configuration
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -26,14 +28,16 @@ sent_data_frames = {}
 
 ACK_TIMEOUT = 1  # Timeout in seconds for waiting ACKs
 
-# Ensure promiscuous mode is enabled
+# Ensure promiscuous mode is enabled and channel is set
 os.system(f"sudo ifconfig {INTERFACE} promisc")
+os.system(f"sudo iwconfig {INTERFACE} channel {CHANNEL}")
 
 def get_sequence_number():
     global seq_num
-    seq_num = (seq_num + 1) % 4096
-    logging.debug(f"Generated sequence number: {seq_num}")
-    return seq_num
+    with seq_num_lock:
+        seq_num = (seq_num + 1) % 4096
+        logging.debug(f"Generated sequence number: {seq_num}")
+        return seq_num
 
 def create_element(id, info):
     logging.debug(f"Creating element with ID {id} and info {info}")
@@ -75,7 +79,7 @@ def create_probe_response(bssid, src_mac):
     return probe_response
 
 def create_auth_response(bssid, src_mac):
-    seq = 0
+    seq = get_sequence_number()
     logging.info(f"Creating authentication response for source MAC: {src_mac}")
     auth_response = RadioTap() / \
                     Dot11(type=0, subtype=11, addr1=src_mac, addr2=bssid, addr3=bssid, SC=seq << 4) / \
@@ -113,7 +117,7 @@ def create_data_frame(src_mac, dst_mac, payload):
     seq = get_sequence_number()
     logging.info(f"Creating data frame from {src_mac} to {dst_mac} with VLAN ID {VLAN_ID}")
     dot11 = Dot11(type=2, subtype=0, addr1=dst_mac, addr2=src_mac, addr3=BSSID, SC=seq << 4)
-    llc_snap = LLC(dsap=0xAA, ssap=0xAA, ctrl=0x03) / SNAP(OUI=0x000000, code=0x8100)
+    llc_snap = LLC(dsap=0xAA, ssap=0xAA, ctrl=0x03) / SNAP(OUI=b'\x00\x00\x00', code=0x8100)
     vlan = Dot1Q(vlan=VLAN_ID)
     data_frame = RadioTap() / dot11 / llc_snap / vlan / payload
     logging.debug(f"Data frame created: {data_frame.summary()}")
@@ -130,12 +134,8 @@ def packet_handler(packet):
     try:
         # Check RadioTap header to filter out packets sent by our own AP
         radiotap_header = packet.getlayer(RadioTap)
-        if radiotap_header:
-            src_mac = radiotap_header.addr2
-
-            if src_mac == BSSID:
-                return  # Ignore packets sent by our own AP
-            # Process only if it's not a packet sent by our AP
+        if radiotap_header and radiotap_header.addr2 == BSSID:
+            return  # Ignore packets sent by our own AP
         
         if packet.haslayer(Dot11ProbeReq):
             logging.info(f"Received Probe request from {packet.addr2}")
@@ -155,54 +155,34 @@ def packet_handler(packet):
             sendp(assoc_response, iface=INTERFACE, verbose=False)
             logging.info(f"Association response sent to {packet.addr2}")
             clients[packet.addr2] = {'associated': True}
-            logging.info(f"Client {packet.addr2} associated successfully")
+            logging.info(f"Client {packet.addr2} associated")
 
-            # Immediately send VLAN-tagged data frame upon successful association
-            send_data_frame(BSSID, packet.addr2, b"This is a VLAN-tagged data frame payload")
-
-        elif packet.type == 2:  # Data frame
-            logging.info(f"Received data frame from {packet.addr2} to {packet.addr1}")
-            if packet.addr1 in clients:  # Forward to another client
-                sendp(packet, iface=INTERFACE, verbose=False)
-                logging.info(f"Forwarded data frame to client {packet.addr1}")
-            else:  # Forward to the internet
-                send(packet)  # Sending out without RadioTap header for internet
-                logging.info(f"Forwarded data frame to the internet")
-
-        elif packet.type == 0 and packet.subtype == 13:  # ACK frame
-            seq = packet.SC >> 4
-            if seq in sent_data_frames:
-                logging.info(f"Received ACK for sequence number: {seq}")
-                del sent_data_frames[seq]
+        elif packet.haslayer(Dot11) and packet.type == 2 and packet.subtype == 0:
+            src_mac = packet.addr2
+            dst_mac = packet.addr1
+            payload = packet.payload
+            logging.info(f"Received data frame from {src_mac} to {dst_mac}")
+            send_data_frame(src_mac, dst_mac, payload)
 
     except Exception as e:
         logging.error(f"Error handling packet: {e}")
 
-def retransmit_data_frames():
-    while True:
-        current_time = time.time()
-        for seq, frame_info in list(sent_data_frames.items()):
-            if current_time - frame_info['timestamp'] > ACK_TIMEOUT:
-                logging.warning(f"Retransmitting data frame with sequence number: {seq}")
-                sendp(frame_info['frame'], iface=INTERFACE, verbose=False)
-                sent_data_frames[seq]['timestamp'] = current_time
-        time.sleep(0.1)
+def main():
+    logging.info("Starting script...")
+    try:
+        # Set the interface to monitor mode
+        os.system(f"sudo ifconfig {INTERFACE} up")
+        os.system(f"sudo iw dev {INTERFACE} set type monitor")
+        
+        # Start sending beacons
+        beacon_thread = threading.Thread(target=send_beacon, args=(INTERFACE,))
+        beacon_thread.daemon = True
+        beacon_thread.start()
+        
+        # Start sniffing packets
+        sniff(iface=INTERFACE, prn=packet_handler, store=0)
+    except Exception as e:
+        logging.error(f"Error in main: {e}")
 
 if __name__ == "__main__":
-    try:
-        logging.info("Starting beacon thread")
-        beacon_thread = threading.Thread(target=send_beacon, args=(INTERFACE,))
-        beacon_thread.daemon = True  # Daemon thread to automatically terminate on program exit
-        beacon_thread.start()
-
-        logging.info("Starting retransmission thread")
-        retransmission_thread = threading.Thread(target=retransmit_data_frames)
-        retransmission_thread.daemon = True  # Daemon thread for retransmitting data frames
-        retransmission_thread.start()
-
-        logging.info("Starting packet sniffing")
-        sniff(iface=INTERFACE, prn=packet_handler)
-    except KeyboardInterrupt:
-        logging.info("Stopping the access point")
-    except Exception as e:
-        logging.error(f"Unexpected error: {e}")
+    main()
