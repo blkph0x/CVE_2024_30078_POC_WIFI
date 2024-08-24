@@ -13,7 +13,7 @@ BSSID = "8E:B8:4A:75:E3:56"
 CHANNEL = 1
 BEACON_INTERVAL = 0.1024
 CUSTOM_VSA = b'\xdd\x07\x00\x50\xf2\x02\x01\x01'
-VLAN_ID = 100
+VLAN_ID = 0 #must be zero to trigger the bug
 
 # Global sequence number
 seq_num = 0
