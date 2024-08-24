@@ -1,4 +1,17 @@
 ### CVE-2024-30078:
+# UPDATE 6
+this may be the last update unless someone who undertsands the wifi stack a little better then myself
+It appears that the exploitability of this vulnerability has been somewhat overstated. There are specific prerequisites that must be met for it to be exploited as it currently stands.
+
+As previously noted, the native driver does not account for an additional 4 bytes when the EtherType is 0x8100 (VLAN tagged network). Since the packet is rewritten on the original buffer, this causes it to be processed 4 bytes ahead of where it should be, due to the expected but missing dot1q header. This not only corrupts the translated packet—resulting in it being discarded as invalid—but also leads to an overwrite of up to 2 bytes outside the MDL buffer that holds the packet.
+
+But how feasible is this exploit?
+
+In practice, it is not straightforward. There's a safeguard that ensures the 12 bits of the VLAN ID field must be zero at the location where the dot1q header was anticipated. To overflow the buffer, you cannot send these extra bytes, meaning you are reliant on the existing bytes in the memory. You could either send one zero byte after the SNAP header to overflow by one byte, or none at all to overflow by two bytes. However, brute-forcing to find a scenario where the two bytes following the buffer are both zero is challenging, as there are 65,535 possible combinations.
+
+Moreover, the difficulty doesn't end there. The adjacent heap memory layout is critical. While you do control the 2 bytes that are overwritten (which would be the last 2 octets of the transmitter's MAC address), the actual content you overwrite is crucial in determining whether a crash occurs. If fortunate, you might overwrite a memory pointer that is later dereferenced, potentially causing a crash. However, the likelihood of this leading to remote code execution is extremely low. At a minimum, another vulnerability that can remotely leak a kernel pointer would be necessary.
+
+In summary, the impact of this CVE appears to be considerably less severe than initially suggested in the Microsoft advisory. Exploiting it requires being on the same network as the target, brute-forcing a specific memory layout, and obtaining additional information to achieve anything beyond a Denial of Service (DoS).
 # UPDATE 5
 Sorry its been a long weekend.. The issue is in the LLC when vlan is set it should be 8 bytes unless its vlan then it requires 4 more bytes at the end that is what the patch checks. so in the unpatched version we have out of bounds read then at lines 113/114/115 the buffer is modified directily since our payload is 10 bytes long and it expects 12 bytes we will have a 2 byte write condtions where the last two bytes of the senders mac will be written.. putting together a write up and cases over this week in my spare time. i think i wrote that correctly its pretty vague but ill get that sorted.. 
 # UPDATE 4
