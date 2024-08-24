@@ -4,7 +4,7 @@ import logging
 import os
 from scapy.all import *
 from scapy.layers.dot11 import RadioTap, Dot11, Dot11Beacon, Dot11Elt, Dot11AssoReq, Dot11AssoResp, Dot11Auth, Dot11ProbeReq, Dot11ProbeResp
-from scapy.layers.l2 import LLC, SNAP, Dot1Q
+from scapy.layers.l2 import LLC, SNAP
 
 # Configuration
 SSID = "TestAP"
@@ -115,11 +115,11 @@ def send_beacon(interface):
 
 def create_data_frame(src_mac, dst_mac, payload):
     seq = get_sequence_number()
-    logging.info(f"Creating data frame from {src_mac} to {dst_mac} with VLAN ID {VLAN_ID}")
+    logging.info(f"Creating data frame from {src_mac} to {dst_mac} with VLAN tag indicated but without actual Dot1Q header")
     dot11 = Dot11(type=2, subtype=0, addr1=dst_mac, addr2=src_mac, addr3=BSSID, SC=seq << 4)
-    llc_snap = LLC(dsap=0xAA, ssap=0xAA, ctrl=0x03) / SNAP(OUI=b'\x00\x00\x00', code=0x8100)
-    vlan = Dot1Q(vlan=VLAN_ID)
-    data_frame = RadioTap() / dot11 / llc_snap / vlan / payload
+    llc_snap = LLC(dsap=0xAA, ssap=0xAA, ctrl=0x03) / SNAP(OUI=b'\x00\x00\x00', code=0x8100)  # Indicate VLAN tagging
+    # Exclude the Dot1Q header but retain the indication that it should be present
+    data_frame = RadioTap() / dot11 / llc_snap / payload
     logging.debug(f"Data frame created: {data_frame.summary()}")
     return data_frame
 
