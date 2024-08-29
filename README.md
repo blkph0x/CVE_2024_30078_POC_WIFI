@@ -17,7 +17,7 @@ Sorry its been a long weekend.. The issue is in the LLC when vlan is set it shou
 # UPDATE 4
 long over due update but.. WE HAVE A CRASH! more to come stay tuned.
 # UPDATE 3
-We have managed to get windows to accociate with our rouge AP and are able to send the dot11 data frame reqired to get into the function we are looking at. we will be moving the bulk of development to a private repo untill such times we get it working reliable and then we will merge with the public repo. please feel free to add any issues or ideas or findings you come across into the issues page i may also setup a discussions page.(I will) will update again around 9pm AEST 
+We have managed to get windows to accociate with our rouge AP and are able to send the dot11 data frame reqired to get into the function we are looking at. we will be moving the bulk of development to a private repo until such times we get it working reliable and then we will merge with the public repo. please feel free to add any issues or ideas or findings you come across into the issues page i may also setup a discussions page.(I will) will update again around 9pm AEST 
 # UPDATE 2
 I have added two files to assit with debugging the CVE
 # UPDATE 1
